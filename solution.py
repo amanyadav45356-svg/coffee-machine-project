@@ -1,93 +1,83 @@
-MENU = {
-    "espresso": {
-        "ingredients": {
-            "water": 50,
-            "coffee": 18,
-        },
-        "cost": 1.5,
-    },
-    "latte": {
-        "ingredients": {
-            "water": 200,
-            "milk": 150,
-            "coffee": 24,
-        },
-        "cost": 2.5,
-    },
-    "cappuccino": {
-        "ingredients": {
-            "water": 250,
-            "milk": 100,
-            "coffee": 24,
-        },
-        "cost": 3.0,
-    }
-}
-
-profit = 0
-resources = {
-    "water": 300,
-    "milk": 200,
-    "coffee": 100,
-}
+import random
+from art import logo
 
 
-def is_resource_sufficient(order_ingredients):
-    """Returns True when order can be made, False if ingredients are insufficient."""
-    for item in order_ingredients:
-        if order_ingredients[item] > resources[item]:
-            print(f"Sorry there is not enough {item}.")
-            return False
-    return True
+def deal_card():
+    """Returns a random card from the deck"""
+    cards = [11, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10]
+    card = random.choice(cards)
+    return card
 
 
-def process_coins():
-    """Returns the total calculated from coins inserted."""
-    print("Please insert coins.")
-    total = int(input("how many quarters?: ")) * 0.25
-    total += int(input("how many dimes?: ")) * 0.1
-    total += int(input("how many nickles?: ")) * 0.05
-    total += int(input("how many pennies?: ")) * 0.01
-    return total
+def calculate_score(cards):
+    """Take a list of cards and return the score calculated from the cards"""
+    if sum(cards) == 21 and len(cards) == 2:
+        return 0
+
+    if 11 in cards and sum(cards) > 21:
+        cards.remove(11)
+        cards.append(1)
+
+    return sum(cards)
 
 
-def is_transaction_successful(money_received, drink_cost):
-    """Return True when the payment is accepted, or False if money is insufficient."""
-    if money_received >= drink_cost:
-        change = round(money_received - drink_cost, 2)
-        print(f"Here is ${change} in change.")
-        global profit
-        profit += drink_cost
-        return True
+def compare(u_score, c_score):
+    """Compares the user score u_score against the computer score c_score."""
+    if u_score == c_score:
+        return "Draw 🙃"
+    elif c_score == 0:
+        return "Lose, opponent has Blackjack 😱"
+    elif u_score == 0:
+        return "Win with a Blackjack 😎"
+    elif u_score > 21:
+        return "You went over. You lose 😭"
+    elif c_score > 21:
+        return "Opponent went over. You win 😁"
+    elif u_score > c_score:
+        return "You win 😃"
     else:
-        print("Sorry that's not enough money. Money refunded.")
-        return False
+        return "You lose 😤"
 
 
-def make_coffee(drink_name, order_ingredients):
-    """Deduct the required ingredients from the resources."""
-    for item in order_ingredients:
-        resources[item] -= order_ingredients[item]
-    print(f"Here is your {drink_name} ☕️. Enjoy!")
+def play_game():
+    print(logo)
+    user_cards = []
+    computer_cards = []
+    computer_score = -1
+    user_score = -1
+    is_game_over = False
+
+    for _ in range(2):
+        user_cards.append(deal_card())
+        computer_cards.append(deal_card())
+
+    while not is_game_over:
+        user_score = calculate_score(user_cards)
+        computer_score = calculate_score(computer_cards)
+        print(f"Your cards: {user_cards}, current score: {user_score}")
+        print(f"Computer's first card: {computer_cards[0]}")
+
+        if user_score == 0 or computer_score == 0 or user_score > 21:
+            is_game_over = True
+        else:
+            user_should_deal = input("Type 'y' to get another card, type 'n' to pass: ")
+            if user_should_deal == "y":
+                user_cards.append(deal_card())
+            else:
+                is_game_over = True
+
+    while computer_score != 0 and computer_score < 17:
+        computer_cards.append(deal_card())
+        computer_score = calculate_score(computer_cards)
+
+    print(f"Your final hand: {user_cards}, final score: {user_score}")
+    print(f"Computer's final hand: {computer_cards}, final score: {computer_score}")
+    print(compare(user_score, computer_score))
 
 
-is_on = True
-
-while is_on:
-    choice = input("What would you like? (espresso/latte/cappuccino): ")
-    if choice == "off":
-        is_on = False
-    elif choice == "report":
-        print(f"Water: {resources['water']}ml")
-        print(f"Milk: {resources['milk']}ml")
-        print(f"Coffee: {resources['coffee']}g")
-        print(f"Money: ${profit}")
-    else:
-        drink = MENU[choice]
-        if is_resource_sufficient(drink["ingredients"]):
-            payment = process_coins()
-            if is_transaction_successful(payment, drink["cost"]):
-                make_coffee(choice, drink["ingredients"])
+while input("Do you want to play a game of Blackjack? Type 'y' or 'n': ") == "y":
+    print("\n" * 20)
+    play_game()
 
 
 
